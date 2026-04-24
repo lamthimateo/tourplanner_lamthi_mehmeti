@@ -1,0 +1,5 @@
+# This file is used by the build system to adjust CSS and JS output to support the specified browsers.
+
+last 1 Chrome version
+last 1 Firefox version
+last 1 Safari version

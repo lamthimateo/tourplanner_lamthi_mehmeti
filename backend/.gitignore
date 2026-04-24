@@ -1,0 +1,15 @@
+# Maven
+/target/
+
+# Local env (do not commit secrets)
+.env
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# macOS
+.DS_Store
+__MACOSX/

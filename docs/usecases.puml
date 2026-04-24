@@ -1,0 +1,102 @@
+@startuml Tour Planner — Use Case Diagram
+
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #1e2330
+    BorderColor #4a90d9
+    FontColor #e6e6e6
+    ArrowColor #4a90d9
+}
+skinparam actor {
+    BackgroundColor #4a90d9
+    BorderColor #4a90d9
+    FontColor #e6e6e6
+}
+
+left to right direction
+
+actor User as U
+actor "OpenRouteService\n(external API)" as ORS
+
+rectangle "Tour Planner Application" {
+
+    ' ─── Auth ────────────────────────────────────────────────────────────────
+    package "Authentication" {
+        usecase "Register account"     as UC_REG
+        usecase "Log in"               as UC_LOGIN
+        usecase "Log out"              as UC_LOGOUT
+    }
+
+    ' ─── Tours ───────────────────────────────────────────────────────────────
+    package "Tour Management" {
+        usecase "View tour list"        as UC_LIST
+        usecase "Create new tour"       as UC_CREATE
+        usecase "Edit tour details"     as UC_EDIT
+        usecase "Delete tour"           as UC_DELETE
+        usecase "Calculate route"       as UC_ROUTE
+        usecase "Upload tour image"     as UC_IMG
+        usecase "Search tours"          as UC_SEARCH
+    }
+
+    ' ─── Logs ────────────────────────────────────────────────────────────────
+    package "Tour Logs" {
+        usecase "View tour logs"        as UC_VLOGS
+        usecase "Add tour log"          as UC_ADDLOG
+        usecase "Edit tour log"         as UC_EDITLOG
+        usecase "Delete tour log"       as UC_DELLOG
+    }
+
+    ' ─── Import / Export ────────────────────────────────────────────────────
+    package "Data Transfer" {
+        usecase "Export tour to JSON"   as UC_EXPORT
+        usecase "Import tour from JSON" as UC_IMPORT
+    }
+
+    ' ─── Reports ─────────────────────────────────────────────────────────────
+    package "Reports" {
+        usecase "Download tour PDF"     as UC_TOURPDF
+        usecase "Download summary PDF"  as UC_SUMPDF
+    }
+
+    ' ─── Statistics ──────────────────────────────────────────────────────────
+    package "Statistics (Unique Feature)" {
+        usecase "View statistics\ndashboard"  as UC_STATS
+    }
+}
+
+' ─── User associations ───────────────────────────────────────────────────────
+U --> UC_REG
+U --> UC_LOGIN
+U --> UC_LOGOUT
+
+U --> UC_LIST
+U --> UC_CREATE
+U --> UC_EDIT
+U --> UC_DELETE
+U --> UC_ROUTE
+U --> UC_IMG
+U --> UC_SEARCH
+
+U --> UC_VLOGS
+U --> UC_ADDLOG
+U --> UC_EDITLOG
+U --> UC_DELLOG
+
+U --> UC_EXPORT
+U --> UC_IMPORT
+
+U --> UC_TOURPDF
+U --> UC_SUMPDF
+
+U --> UC_STATS
+
+' ─── ORS associations ────────────────────────────────────────────────────────
+UC_ROUTE --> ORS : "geocode + routing\nvia backend proxy"
+
+' ─── Include / extend ────────────────────────────────────────────────────────
+UC_CREATE ..> UC_LOGIN   : <<include>>
+UC_EDIT   ..> UC_LOGIN   : <<include>>
+UC_ROUTE  ..> UC_EDIT    : <<extend>>
+UC_ADDLOG ..> UC_CREATE  : <<extend>>
+
+@enduml

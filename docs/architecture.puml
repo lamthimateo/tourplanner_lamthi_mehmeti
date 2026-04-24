@@ -1,0 +1,180 @@
+@startuml Tour Planner — Layer Architecture
+
+skinparam component {
+    BackgroundColor #1e2330
+    BorderColor #4a90d9
+    FontColor #e6e6e6
+    ArrowColor #4a90d9
+}
+skinparam package {
+    BackgroundColor #0b0e14
+    BorderColor #4a90d9
+    FontColor #4a90d9
+}
+skinparam database {
+    BackgroundColor #1e2330
+    BorderColor #4a90d9
+    FontColor #e6e6e6
+}
+skinparam actor {
+    BackgroundColor #4a90d9
+    BorderColor #4a90d9
+    FontColor #e6e6e6
+}
+skinparam note {
+    BackgroundColor #2a3040
+    BorderColor #4a90d9
+    FontColor #e6e6e6
+}
+
+' ─── External actors ──────────────────────────────────────────────────────────
+actor "User\n(Browser)" as User
+database "PostgreSQL\n:5432" as DB
+component "OpenRouteService\nREST API" as ORS #2a3040
+
+' ─── Frontend (Angular) ───────────────────────────────────────────────────────
+package "Frontend — Angular 17 (port 4200)" {
+
+    package "View" {
+        component "AppComponent\ntemplate (HTML)" as View
+    }
+
+    package "ViewModel" {
+        component "TourViewModel" as TVM
+        component "TourLogViewModel" as TLVM
+    }
+
+    package "Model / Services" {
+        component "ApiService\n(HTTP client)" as ApiSvc
+        component "AuthService\n(JWT storage)" as AuthSvc
+        component "authInterceptor\n(adds Bearer header)" as Interceptor
+        component "StatCardComponent\n(reusable UI)" as StatCard
+    }
+}
+
+' ─── Backend (Spring Boot) ────────────────────────────────────────────────────
+package "Backend — Spring Boot 3.1.4 (port 8081)" {
+
+    package "Web Layer (Controllers)" {
+        component "TourController" as TC
+        component "AuthController" as AC
+        component "RouteController" as RC
+        component "StatsController" as SC
+        component "ApiExceptionHandler" as EH
+    }
+
+    package "Business Layer (Services)" {
+        component "TourService" as TS
+        component "TourLogService" as TLS
+        component "AuthService" as AS
+        component "StatsService" as SS
+        component "ReportService\n(iText 7 PDF)" as RS
+        component "TourDataTransferService\n(JSON import/export)" as TDTS
+        component "OpenRouteService\n(HTTP → ORS API)" as ORS_SVC
+        component "LocationService\n«interface»" as LocSvc
+        component "OpenRouteLocationService" as OLS
+    }
+
+    package "Security" {
+        component "JwtAuthFilter\n(OncePerRequestFilter)" as JAF
+        component "JwtUtil\n(JJWT 0.11.5)" as JWT
+        component "SecurityConfig\n(Spring Security)" as SEC
+        component "AuthContext\n(reads userId from JWT)" as CTX
+    }
+
+    package "Data Access Layer (Repositories)" {
+        component "TourRepository\n«Spring Data JPA»" as TR
+        component "TourLogRepository\n«Spring Data JPA»" as TLR
+        component "UserRepository\n«Spring Data JPA»" as UR
+    }
+
+    package "Domain Model (Entities)" {
+        component "Tour" as T
+        component "TourLog" as TL
+        component "User" as U
+    }
+}
+
+' ─── Arrows ───────────────────────────────────────────────────────────────────
+
+' User interacts with the View
+User --> View : "browser events"
+View --> User : "rendered HTML"
+
+' MVVM: View ↔ ViewModel (two-way binding)
+View <--> TVM  : "[(ngModel)]"
+View <--> TLVM : "[(ngModel)]"
+View --> StatCard : "<app-stat-card>"
+
+' ViewModel → Model
+TVM --> ApiSvc  : "toTour() / from()"
+TLVM --> ApiSvc : "toLog() / from()"
+
+' Auth flow
+AuthSvc --> Interceptor : "getToken()"
+Interceptor --> ApiSvc  : "adds Authorization header"
+AuthSvc --> AC : "POST /api/auth/**"
+
+' Frontend → Backend (HTTP/REST)
+ApiSvc --> TC  : "GET|POST|PUT|DELETE /api/tours/**"
+ApiSvc --> RC  : "GET /api/route/**"
+ApiSvc --> SC  : "GET /api/stats"
+
+' Security filter chain
+JAF --> JWT    : "validate token"
+JAF --> CTX    : "set credentials"
+SEC --> JAF    : "registers filter"
+
+' Web → Business
+TC --> TS   : "CRUD + search + import/export"
+TC --> TLS  : "log CRUD"
+TC --> RS   : "generate PDF"
+TC --> TDTS : "export/import JSON"
+AC --> AS   : "register / login"
+RC --> ORS_SVC : "geocode + route"
+SC --> SS   : "aggregate stats"
+
+' Business → Security
+TS  --> CTX : "getCurrentUserId()"
+TLS --> CTX : "getCurrentUserId()"
+SS  --> CTX : "getCurrentUserId()"
+AS  --> JWT : "generateToken()"
+OLS --|> LocSvc : "implements"
+OLS --> ORS_SVC : "delegates"
+
+' Business → DAL
+TS   --> TR  : "findByUserId / save"
+TLS  --> TLR : "findByTourId / save"
+AS   --> UR  : "findByUsername / save"
+SS   --> TR  : "findByUserId"
+SS   --> TLR : "findByTourId"
+TDTS --> TR  : "save"
+TDTS --> TLR : "save"
+
+' DAL → Entities
+TR  --> T  : "manages"
+TLR --> TL : "manages"
+UR  --> U  : "manages"
+
+' DAL → PostgreSQL
+TR  --> DB : "Hibernate/JPA"
+TLR --> DB : "Hibernate/JPA"
+UR  --> DB : "Hibernate/JPA"
+
+' Backend → External API
+ORS_SVC --> ORS : "HTTPS"
+
+note bottom of SEC
+  Stateless JWT auth.
+  All /api/** routes require
+  Authorization: Bearer <token>
+  except /api/auth/**
+end note
+
+note bottom of DB
+  Tables: tour, tour_log, app_user
+  Schema auto-created by Hibernate
+  (ddl-auto=update)
+end note
+
+@enduml

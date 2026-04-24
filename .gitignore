@@ -1,0 +1,29 @@
+# OS / editor
+.DS_Store
+__MACOSX/
+.idea/
+.vscode/
+
+# Env / secrets
+**/.env
+**/.env.local
+
+# Java / Maven / Spring
+**/target/
+**/*.log
+
+# Node / Angular
+node_modules/
+**/node_modules/
+frontend/dist/
+**/dist/
+frontend/.angular/
+**/.angular/
+
+# Python / tooling (created during checklist conversion)
+.venv*/
+**/.venv*/
+
+# Temporary folders
+.tmp*/
+**/.tmp*/
