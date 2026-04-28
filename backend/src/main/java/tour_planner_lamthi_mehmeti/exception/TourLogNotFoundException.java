@@ -5,6 +5,7 @@ package tour_planner_lamthi_mehmeti.exception;
  * the requested tour.  Mapped to HTTP 404 by ApiExceptionHandler.
  */
 public class TourLogNotFoundException extends RuntimeException {
+
     public TourLogNotFoundException(Long id) {
         super("TourLog not found with ID: " + id);
     }
