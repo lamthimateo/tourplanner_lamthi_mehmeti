@@ -1,6 +1,6 @@
 # Tour Planner — Project Protocol
 
-**Course:** SWEN 2 — Software Engineering 2
+**Course:** SWEN 2 — Software  Engineering 2
 **Team:** Lamthi, Mehmeti
 **Semester:** SS 2026
 **Repository:** one-repo (monorepo: Angular frontend + Spring Boot backend)
