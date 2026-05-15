@@ -11,5 +11,6 @@ unset ESBUILD_BINARY_PATH
 cd "$(dirname "$0")/frontend" || exit 1
 
 # Clean, reproducible install (avoids esbuild host/binary mismatch from stale node_modules)
-npm ci
+rm -rf node_modules
+npm install
 npm start

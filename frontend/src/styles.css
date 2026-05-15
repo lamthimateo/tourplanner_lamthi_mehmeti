@@ -1,5 +1,5 @@
 /* ═════════════════════════════════════════════════════════════════════════
-   Tour Journal — "Cartographer's Journal" design system
+   Tourplanner — "Cartographer's Journal" design system
    Light mode: warm vellum paper + navy/rust ink (for planning by day).
    Dark mode : midnight expedition notebook + ember amber (for planning by fire).
    Typography: Fraunces (editorial serif) + Inter (UI sans) + JetBrains Mono (data).
@@ -866,98 +866,13 @@ button svg { width: 15px; height: 15px; flex: 0 0 auto; }
    AUTH (login / register) — split screen
    ═══════════════════════════════════════════════════════════════════════ */
 .auth-shell {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
   min-height: 100dvh;
-}
-
-.auth-hero {
-  position: relative;
-  padding: 48px 56px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: var(--ink);
-  overflow: hidden;
-  background:
-    radial-gradient(800px 500px at 80% 20%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%),
-    radial-gradient(600px 500px at 20% 90%, color-mix(in srgb, var(--accent-2) 20%, transparent), transparent 55%),
-    linear-gradient(180deg, var(--bg), var(--bg-2));
-  border-right: 1px solid var(--line);
-}
-.auth-hero .bg-compass {
-  position: absolute;
-  right: -80px; top: -40px;
-  width: 520px; height: 520px;
-  color: color-mix(in srgb, var(--ink) 7%, transparent);
-  pointer-events: none;
-}
-.auth-hero .contours {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle at 30% 60%, transparent 80px, color-mix(in srgb, var(--ink) 5%, transparent) 81px, transparent 82px),
-    radial-gradient(circle at 30% 60%, transparent 120px, color-mix(in srgb, var(--ink) 4%, transparent) 121px, transparent 122px),
-    radial-gradient(circle at 30% 60%, transparent 180px, color-mix(in srgb, var(--ink) 3%, transparent) 181px, transparent 182px),
-    radial-gradient(circle at 30% 60%, transparent 240px, color-mix(in srgb, var(--ink) 2%, transparent) 241px, transparent 242px);
-  opacity: 0.8;
-}
-.auth-hero-inner {
-  position: relative;
-  z-index: 1;
-  max-width: 520px;
-}
-.auth-hero .hero-title {
-  font-family: var(--font-serif);
-  font-size: clamp(36px, 4.5vw, 58px);
-  font-weight: 700;
-  line-height: 0.98;
-  font-variation-settings: 'opsz' 144, 'SOFT' 100;
-  letter-spacing: -0.02em;
-  margin: 24px 0 16px;
-}
-.auth-hero .hero-title em {
-  font-style: italic;
-  font-variation-settings: 'opsz' 144, 'SOFT' 100, 'wght' 400;
-  color: var(--accent);
-}
-.auth-hero .hero-lede {
-  font-size: 16px;
-  color: var(--ink-soft);
-  max-width: 460px;
-  line-height: 1.55;
-}
-.hero-features {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 24px;
-  margin-top: 36px;
-  max-width: 520px;
-}
-.hero-feature {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-.hero-feature svg {
-  width: 18px; height: 18px;
-  flex: 0 0 auto;
-  color: var(--accent-2);
-  margin-top: 1px;
-}
-
-.auth-form-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 32px 24px;
-  background: var(--surface);
 }
+
 .auth-card {
   width: min(420px, 100%);
   padding: 32px 28px 28px;
@@ -966,16 +881,10 @@ button svg { width: 15px; height: 15px; flex: 0 0 auto; }
   background: var(--surface);
   box-shadow: var(--shadow-3);
 }
-.auth-card .brand { margin-bottom: 20px; }
 .auth-card h2 {
   font-family: var(--font-serif);
   font-size: 26px;
   margin: 0 0 4px;
-}
-.auth-card .sub {
-  color: var(--ink-mute);
-  font-size: 13px;
-  margin-bottom: 20px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1002,9 +911,7 @@ button svg { width: 15px; height: 15px; flex: 0 0 auto; }
     border-bottom: 1px solid var(--line);
   }
   .main { padding: 18px; }
-  .auth-shell { grid-template-columns: 1fr; }
-  .auth-hero { padding: 32px; min-height: 40dvh; }
-  .hero-features { grid-template-columns: 1fr; }
+  .auth-shell { padding: 24px 16px; }
   .tour-header h1 { font-size: 26px; }
 }
 
