@@ -10,7 +10,10 @@ unset ESBUILD_BINARY_PATH
 
 cd "$(dirname "$0")/frontend" || exit 1
 
-# Clean, reproducible install (avoids esbuild host/binary mismatch from stale node_modules)
-rm -rf node_modules
-npm install
+# Install dependencies only when they are missing — a full reinstall on every
+# start wastes minutes. If you ever hit an esbuild host/binary mismatch after
+# switching Node versions, delete node_modules once and rerun this script.
+if [ ! -d node_modules ]; then
+  npm install
+fi
 npm start

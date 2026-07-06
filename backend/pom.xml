@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example</groupId>
+    <groupId>tour_planner_lamthi_mehmeti</groupId>
     <artifactId>tour-planner-backend</artifactId>
     <version>1.0.0</version>
     <name>Tour Planner Backend</name>
@@ -63,19 +63,9 @@
             <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
 
-        <!-- Loads backend/.env into Spring environment automatically -->
-        <dependency>
-            <groupId>me.paulschwarz</groupId>
-            <artifactId>spring-dotenv</artifactId>
-            <version>4.0.0</version>
-        </dependency>
-
-        <!-- Database: H2 for "runs out of the box" + Postgres for real deployment -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+        <!-- Database: PostgreSQL (run via docker-compose.yml in the repo root).
+             .env loading is handled by our own DotenvLoader + the run scripts,
+             so no extra dotenv dependency is needed. -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -176,6 +166,11 @@
                     <artifactId>junit-vintage-engine</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>

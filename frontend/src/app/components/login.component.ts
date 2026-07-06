@@ -1,3 +1,4 @@
+// Login and register form; emits when auth succeeds.
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';

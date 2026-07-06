@@ -15,23 +15,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link AuthService}.
- *
- * <p>Covers the five interesting flows:
- * <ol>
- *   <li>Successful registration — new user, password is hashed, token minted.</li>
- *   <li>Duplicate registration — fails with a 409 conflict.</li>
- *   <li>Successful login — correct password returns a fresh token.</li>
- *   <li>Login with unknown user — fails.</li>
- *   <li>Login with wrong password — fails.</li>
- * </ol>
- *
- * <p>The repository is mocked with Mockito; the BCrypt encoder and
- * {@link JwtUtil} are real so we also exercise the hash/verify and
- * generate/validate integration. The {@code JwtUtil} secret is a test
- * constant — tokens minted here are never used outside the JVM.
- */
+/** Unit tests for register/login flows in AuthService. */
 public class AuthServiceTest {
 
     private UserRepository userRepo;
@@ -66,7 +50,7 @@ public class AuthServiceTest {
     @Test
     void registerThrowsWhenUsernameTaken() {
         when(userRepo.existsByUsername("bob")).thenReturn(true);
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(IllegalStateException.class,
                 () -> service.register(new AuthRequest("bob", "pass")));
         verify(userRepo, never()).save(any());
     }

@@ -45,4 +45,6 @@ if [ -f .env ]; then
   set +a
 fi
 
-./mvnw clean spring-boot:run
+# No `clean` — incremental compilation makes restarts much faster. Run
+# `./mvnw clean` manually if you ever need a from-scratch build.
+./mvnw spring-boot:run

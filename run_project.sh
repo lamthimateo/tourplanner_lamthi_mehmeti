@@ -42,6 +42,18 @@ free_port 4200
 echo "Starting PostgreSQL (docker compose up -d)..."
 docker compose -f "$ROOT_DIR/docker-compose.yml" up -d
 
+# Wait until Postgres actually accepts connections, otherwise the backend can
+# race ahead and fail its first datasource connection on slower machines.
+echo -n "Waiting for PostgreSQL to become ready"
+for _ in $(seq 1 30); do
+  if docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T db pg_isready -U tourplanner >/dev/null 2>&1; then
+    echo " — ready."
+    break
+  fi
+  echo -n "."
+  sleep 1
+done
+
 echo "Starting backend..."
 (
   cd "$ROOT_DIR/backend"

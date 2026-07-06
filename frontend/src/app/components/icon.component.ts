@@ -1,14 +1,4 @@
-/**
- * IconComponent — a single inline-SVG icon set used throughout the UI.
- *
- * Icons inherit `currentColor`, so wrappers style them via regular CSS
- * (e.g. `.stars svg { color: var(--accent-4); }`). The icons are drawn
- * from a small Lucide-style set to keep the visual language consistent.
- *
- * @example
- * <app-icon name="compass" [size]="24"></app-icon>
- * <app-icon name="bicycle"></app-icon>
- */
+// Reusable inline SVG icons.
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 

@@ -86,7 +86,7 @@ exists).
 cd backend && ./mvnw -o test
 ```
 
-Expected: **55 tests, 0 failures**. Breakdown (§8 of the protocol):
+Expected: **56 tests, 0 failures**. Breakdown (§8 of the protocol):
 
 - `TourServiceSearchTest`, `TourServiceCrudTest`, `TourLogServiceTest`,
   `TourDataTransferServiceTest`, `StatsServiceTest` — service-layer logic

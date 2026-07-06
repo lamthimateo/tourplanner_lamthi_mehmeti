@@ -1,16 +1,4 @@
-/**
- * StatCardComponent — a reusable display card for a single statistic.
- *
- * Used in the Statistics Dashboard to show one metric (e.g. "42 Tours").
- * Demonstrates the "reusable UI component" pattern required by the project spec.
- *
- * Supports four accent tones (primary / navy / forest / gold) so the dashboard
- * can read as a varied, editorial grid rather than a flat list of numbers.
- *
- * @example
- * <app-stat-card [value]="stats.totalTours" label="Tours" tone="primary"
- *                sublabel="across 3 months"></app-stat-card>
- */
+// Single metric box on the stats dashboard.
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -32,12 +20,8 @@ export type StatTone = 'primary' | 'navy' | 'forest' | 'gold';
   `
 })
 export class StatCardComponent {
-  /** The numeric or string value to display prominently. */
   @Input() value: string | number = '';
-  /** Short uppercase label shown above the value (e.g. "Tours"). */
   @Input() label: string = '';
-  /** Optional smaller caption shown below the value. */
   @Input() sublabel?: string;
-  /** Visual accent tone. */
   @Input() tone: StatTone = 'primary';
 }

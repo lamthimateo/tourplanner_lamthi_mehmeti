@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
     <Properties>
-        <Property name="LOG_DIR">${sys:user.home}/TourPlanner/logs</Property>
+        <!-- Honour APP_BASE_DIR (same variable Spring uses for app.base-dir);
+             fall back to ~/TourPlanner when it isn't set. -->
+        <Property name="LOG_DIR">${env:APP_BASE_DIR:-${sys:user.home}/TourPlanner}/logs</Property>
         <Property name="LOG_FILE">${LOG_DIR}/app.log</Property>
     </Properties>
 

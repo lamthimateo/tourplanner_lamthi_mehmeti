@@ -8,14 +8,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link OpenRouteLocationService}.
- *
- * The goal here is to verify the Adapter pattern wiring without touching the
- * network: we prove that calls on the {@link LocationService} interface are
- * delegated to the underlying {@link OpenRouteService}, and that results flow
- * back unchanged.
- */
+/** Unit tests for OpenRouteLocationService (mocked ORS client). */
 class OpenRouteLocationServiceTest {
 
     @Test

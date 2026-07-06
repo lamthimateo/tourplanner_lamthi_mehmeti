@@ -1,3 +1,4 @@
+// Root shell: login gate, sidebar, stats, tour workspace.
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, Stats } from './services/api.service';
@@ -38,6 +39,11 @@ import { TourWorkspaceComponent } from './components/tour-workspace.component';
 
       <main class="main">
 
+        <div class="error-banner" *ngIf="importError">
+          <span>{{ importError }}</span>
+          <button class="small-btn btn-ghost" (click)="importError = null" style="margin-left:auto;">Dismiss</button>
+        </div>
+
         <app-stats-dashboard *ngIf="showStats && stats" [stats]="stats!"></app-stats-dashboard>
 
         <div *ngIf="!selectedTour && !showStats" class="empty-state">
@@ -56,7 +62,7 @@ import { TourWorkspaceComponent } from './components/tour-workspace.component';
           [tour]="selectedTour!"
           (tourSaved)="onTourSaved($event)"
           (tourDeleted)="onTourDeleted()"
-          (tourListChanged)="reloadTours()">
+          (tourListChanged)="reloadTours(true)">
         </app-tour-workspace>
 
       </main>
@@ -73,6 +79,7 @@ export class AppComponent implements OnInit {
   search = '';
   busy = false;
   isDark = false;
+  importError: string | null = null;
 
   constructor(private api: ApiService, public auth: AuthService) {}
 
@@ -88,9 +95,20 @@ export class AppComponent implements OnInit {
     this.tours = []; this.filteredTours = []; this.selectedTour = null; this.stats = null;
   }
 
-  reloadTours(): void {
+  reloadTours(refreshSelected = false): void {
+    const selectedId = refreshSelected ? this.selectedTour?.id : undefined;
     this.api.getTours().subscribe({
-      next: (tours) => { this.tours = tours; this.applyFilter(); },
+      next: (tours) => {
+        this.tours = tours;
+        this.applyFilter();
+        if (selectedId != null) {
+          const updated = tours.find(t => t.id === selectedId);
+          if (updated) this.selectedTour = TourViewModel.from(updated);
+        }
+        if (this.showStats) {
+          this.api.getStats().subscribe({ next: (s) => this.stats = s });
+        }
+      },
       error: (err) => { if (err.status === 401 || err.status === 403) this.auth.logout(); }
     });
   }
@@ -98,6 +116,7 @@ export class AppComponent implements OnInit {
   onSearch(q: string): void {
     this.search = q;
     if (!q.trim()) { this.filteredTours = this.tours; return; }
+    // Try backend search first; fall back to client filter on error.
     this.api.searchTours(q.trim()).subscribe({
       next: (ids) => {
         const idSet = new Set(ids);
@@ -148,16 +167,25 @@ export class AppComponent implements OnInit {
   }
 
   importTour(file: File): void {
+    this.importError = null;
     const reader = new FileReader();
     reader.onload = () => {
+      // Parse JSON locally, then send to backend for import.
+      let data: unknown;
       try {
-        const data = JSON.parse(reader.result as string);
-        this.busy = true;
-        this.api.importTour(data).subscribe({
-          next: (imported) => { this.busy = false; this.reloadTours(); this.selectTour(imported); },
-          error: () => { this.busy = false; }
-        });
-      } catch {}
+        data = JSON.parse(reader.result as string);
+      } catch {
+        this.importError = `"${file.name}" is not valid JSON — export a tour first and import that file.`;
+        return;
+      }
+      this.busy = true;
+      this.api.importTour(data).subscribe({
+        next: (imported) => { this.busy = false; this.reloadTours(); this.selectTour(imported); },
+        error: (err) => {
+          this.busy = false;
+          this.importError = err?.error?.message || 'Import failed — the file does not look like a tour export.';
+        }
+      });
     };
     reader.readAsText(file);
   }

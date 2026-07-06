@@ -4,6 +4,7 @@ import { Stats } from '../services/api.service';
 import { StatCardComponent } from './stat-card.component';
 import { IconComponent, IconName } from './icon.component';
 
+// Stats overview from GET /api/stats.
 @Component({
   selector: 'app-stats-dashboard',
   standalone: true,
@@ -51,6 +52,7 @@ import { IconComponent, IconName } from './icon.component';
 export class StatsDashboardComponent {
   @Input() stats!: Stats;
 
+  // Scale bar width relative to the busiest transport type.
   barWidth(count: number): number {
     if (!this.stats?.byTransportType?.length) return 0;
     const max = Math.max(...this.stats.byTransportType.map(s => s.tourCount), 1);

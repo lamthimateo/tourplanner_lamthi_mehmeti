@@ -14,23 +14,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link TourDataTransferService}.
- *
- * <p>Exercises both sides of the round-trip:
- * <ul>
- *   <li>{@link TourDataTransferService#exportTourData(Long)} — returns a
- *       DTO that preserves every field of the underlying entity.</li>
- *   <li>{@link TourDataTransferService#importTourData} — creates new
- *       records, assigns the current user's ID (when present), and
- *       attaches logs to the newly-saved tour.</li>
- * </ul>
- *
- * <p>These tests run without a Spring security context to verify the
- * service's graceful fallback behaviour (CLI / seed scenarios), and use
- * Mockito's {@link ArgumentCaptor} to assert on the entities passed to
- * the repositories rather than spying on save-side-effects.
- */
+/** Unit tests for tour JSON import/export. */
 public class TourDataTransferServiceTest {
 
     private static Tour tour(Long id, String name) {

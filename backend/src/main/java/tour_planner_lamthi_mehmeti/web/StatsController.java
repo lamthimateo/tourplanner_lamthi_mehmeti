@@ -7,13 +7,7 @@ import tour_planner_lamthi_mehmeti.dto.StatsDto;
 import tour_planner_lamthi_mehmeti.service.StatsService;
 
 /**
- * REST controller for the <b>Statistics Dashboard</b> — the "unique feature"
- * of this project required by the specification.
- *
- * <p>Single endpoint {@code GET /api/stats} returns a {@link StatsDto} with:
- * aggregated totals (tours, logs, average distance, etc.), a breakdown by
- * transport type, and a "top tours" list. The controller simply delegates to
- * {@link StatsService} where the aggregation logic lives.
+ * GET /api/stats — dashboard numbers for the current user.
  */
 @RestController
 @RequestMapping("/api/stats")
@@ -25,7 +19,6 @@ public class StatsController {
         this.statsService = statsService;
     }
 
-    /** Full statistics snapshot scoped to the current user. */
     @GetMapping
     public StatsDto getStats() {
         return statsService.getStats();

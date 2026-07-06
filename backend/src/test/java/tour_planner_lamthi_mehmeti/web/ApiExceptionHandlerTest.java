@@ -15,13 +15,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link ApiExceptionHandler}.
- *
- * These tests exercise every handler method on the advice and verify both the
- * HTTP status code and the response body shape, so that the REST contract for
- * errors does not drift silently.
- */
+/** Unit tests for ApiExceptionHandler HTTP status + error body mapping. */
 class ApiExceptionHandlerTest {
 
     private final ApiExceptionHandler handler = new ApiExceptionHandler();
@@ -84,7 +78,7 @@ class ApiExceptionHandlerTest {
         assertEquals("Unexpected error", response.getBody().get("message"));
     }
 
-    /** Placeholder used only to build a valid {@link MethodParameter} for the test. */
+    // Dummy method so we can build a MethodParameter for validation tests.
     @SuppressWarnings("unused")
     static class Dummy {
         void noop() {}

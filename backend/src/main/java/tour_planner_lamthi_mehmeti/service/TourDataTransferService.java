@@ -22,27 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Import / export service that round-trips a tour and its logs through a
- * portable JSON DTO ({@link TourExportDto}).
- *
- * <p>The two public operations used by the REST layer are:
- * <ul>
- *   <li>{@link #exportTourData(Long)} — returns a DTO for a given tour (with
- *       per-user ownership check when running inside a request).</li>
- *   <li>{@link #importTourData(TourExportDto)} — persists a new tour +
- *       logs; the incoming {@code userId} field is deliberately discarded
- *       and replaced with the current user's ID (so attackers can't hand
- *       themselves ownership of someone else's data by crafting an import
- *       file).</li>
- * </ul>
- *
- * <p>There are additional string/file helpers used by unit tests and a
- * potential CLI tool to materialize the DTO to / from JSON text on disk.
- *
- * <p>Design pattern: this class implements the <b>Data Transfer Object</b>
- * pattern — the wire format ({@code TourExportDto}) is decoupled from the
- * JPA entities so the export format can evolve without forcing database
- * migrations and vice-versa.
+ * Import/export tours as JSON via TourExportDto.
  */
 @Service
 public class TourDataTransferService {
@@ -51,7 +31,7 @@ public class TourDataTransferService {
 
     private final TourRepository tourRepository;
     private final TourLogRepository tourLogRepository;
-    /** Shared Jackson mapper configured to serialize {@link LocalDate} as ISO text. */
+    /** Jackson mapper with ISO date strings instead of timestamps. */
     private final ObjectMapper mapper;
 
     public TourDataTransferService(TourRepository tourRepository, TourLogRepository tourLogRepository) {
@@ -66,11 +46,6 @@ public class TourDataTransferService {
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    /**
-     * Copies a {@link Tour} + its logs into a flat DTO tree suitable for
-     * JSON serialization. Deliberately a private static helper — nothing
-     * outside this class should know the DTO shape.
-     */
     private static TourExportDto toDto(Tour tour, List<TourLog> logs) {
         TourExportDto dto = new TourExportDto();
         dto.tour = new TourExportDto.TourDto();
@@ -99,16 +74,6 @@ public class TourDataTransferService {
         return dto;
     }
 
-    /**
-     * Exports the given tour (including its logs) as a DTO that the
-     * controller can directly serialize to JSON.
-     *
-     * <p>When running inside an HTTP request, the ownership check makes
-     * sure one user cannot request another user's data by guessing the id.
-     * For tests/CLI without a security context we fall back to raw lookup.
-     *
-     * @throws TourNotFoundException if the tour doesn't exist or isn't owned by the caller
-     */
     public TourExportDto exportTourData(Long tourId) {
         logger.info("Exporting tour data for tour ID: {}", tourId);
         Long userId = currentUserIdOrNull();
@@ -122,20 +87,7 @@ public class TourDataTransferService {
         return toDto(tour, logs);
     }
 
-    // -------------------------------------------------------------------------
-    // JSON string / file helpers (convenience wrappers for CLI and tests)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Persists a new tour (and its logs) from an import DTO.
-     *
-     * <p>Security hardening: the caller-supplied {@code userId} is discarded.
-     * The new tour is always stamped with the currently authenticated user's
-     * ID, so importing a payload that was exported by a different user
-     * simply re-homes it into the importer's account.
-     *
-     * @throws IllegalArgumentException when {@code dto} or {@code dto.tour} is null
-     */
+    // Import always stamps the current user as owner (never trust exported userId).
     public Tour importTourData(TourExportDto dto) {
         logger.info("Importing tour data");
         if (dto == null || dto.tour == null) {
@@ -150,7 +102,8 @@ public class TourDataTransferService {
         tour.setTransportType(dto.tour.transportType);
         tour.setDistance(dto.tour.distance);
         tour.setEstimatedTime(dto.tour.estimatedTime);
-        tour.setImagePath(dto.tour.imagePath);
+        // Image paths are machine-specific; re-upload after import.
+        tour.setImagePath(null);
         // Stamp ownership from the JWT so an import never re-attaches the tour to
         // a different (or missing) user from the original export file.
         Long userId = currentUserIdOrNull();
@@ -176,36 +129,28 @@ public class TourDataTransferService {
         return savedTour;
     }
 
-    /** Serializes the tour DTO to a pretty-printed JSON string. */
     public String exportTourToJsonString(Long tourId) throws IOException {
         TourExportDto dto = exportTourData(tourId);
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(dto);
     }
 
-    /** Writes the pretty-printed JSON export to {@code file} on disk. */
     public void exportTourToFile(Long tourId, Path file) throws IOException {
         String json = exportTourToJsonString(tourId);
         Files.writeString(file, json);
     }
 
-    /** Imports a tour from a JSON string and returns the new tour's primary key. */
     public Long importTourFromJsonString(String json) throws IOException {
         TourExportDto dto = mapper.readValue(json, TourExportDto.class);
         Tour saved = importTourData(dto);
         return saved.getId();
     }
 
-    /** Imports a tour from a JSON file on disk and returns the new tour's primary key. */
     public Long importTourFromFile(Path file) throws IOException {
         String json = Files.readString(file);
         return importTourFromJsonString(json);
     }
 
-    /**
-     * Returns the current user's ID if a Spring Security context is active,
-     * or {@code null} otherwise. Keeps this service usable in unit tests and
-     * in CLI invocations that don't set up an authentication context.
-     */
+    /** Returns current user ID, or null when called outside a request (tests/CLI). */
     private static Long currentUserIdOrNull() {
         try {
             return AuthContext.getCurrentUserId();

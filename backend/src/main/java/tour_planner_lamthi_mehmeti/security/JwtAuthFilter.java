@@ -13,44 +13,18 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Servlet filter that inspects every incoming HTTP request, extracts a JWT
- * from the {@code Authorization: Bearer ...} header (if present), validates
- * it, and — on success — populates Spring's {@link SecurityContextHolder}
- * with the authenticated principal.
- *
- * <p>Architectural role: this is the concrete realization of the
- * <b>Filter / Chain-of-Responsibility pattern</b> required by the project
- * specification. Each request walks through Spring's filter chain exactly
- * once (we extend {@link OncePerRequestFilter} to guarantee that), and this
- * filter is wired in <i>before</i> the built-in
- * {@code UsernamePasswordAuthenticationFilter} so that downstream code —
- * including {@code AuthContext.getCurrentUserId()} — can rely on the
- * principal already being set.
- *
- * <p>Three branches:
- * <ul>
- *   <li><b>No header</b> — the request continues; Spring Security will later
- *       decide if that's acceptable based on the URL rules in
- *       {@code SecurityConfig} (only {@code /api/auth/**} is public).</li>
- *   <li><b>Valid header</b> — we set the authentication and continue.</li>
- *   <li><b>Invalid/expired header</b> — we abort with a flat 401; the
- *       client must fetch a new token before retrying.</li>
- * </ul>
+ * Reads the Bearer JWT from each request and sets the Spring Security context.
+ * No header → anonymous; bad token → 401.
  */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    /** Helper that knows how to parse and validate our tokens. */
     private final JwtUtil jwtUtil;
 
     public JwtAuthFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
 
-    /**
-     * Core filter logic — runs exactly once per request. See the class
-     * Javadoc for an overview of the branching behaviour.
-     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

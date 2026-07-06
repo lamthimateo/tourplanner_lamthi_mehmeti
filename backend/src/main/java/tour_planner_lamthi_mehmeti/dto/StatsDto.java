@@ -3,7 +3,7 @@ package tour_planner_lamthi_mehmeti.dto;
 import java.util.List;
 
 /**
- * Unique feature: aggregated statistics across all tours for the current user.
+ * DTO returned by the stats dashboard endpoint.
  */
 public class StatsDto {
     private int totalTours;

@@ -1,3 +1,4 @@
+// Edit one tour: form, map, logs, reports.
 import {
   AfterViewInit, Component, ElementRef, EventEmitter,
   Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild
@@ -228,6 +229,11 @@ import { IconComponent, IconName } from './icon.component';
                     [class.invalid]="editingLog.submitted && !editingLog.comment.trim()"></textarea>
           <div class="validation-msg" *ngIf="editingLog.submitted && !editingLog.comment.trim()">Comment is required</div>
         </div>
+        <div>
+          <label>Details (optional)</label>
+          <textarea rows="2" [(ngModel)]="editingLog.logDetails" maxlength="4000"
+                    placeholder="Extended notes: gear, conditions, anything worth remembering…"></textarea>
+        </div>
         <div class="row three">
           <div>
             <label>Difficulty (1–5) <span style="color:var(--accent);">*</span></label>
@@ -262,6 +268,7 @@ import { IconComponent, IconName } from './icon.component';
           <div style="min-width:0;">
             <div class="log-date">{{ l.logDate }}</div>
             <div class="log-comment">"{{ l.comment }}"</div>
+            <div class="small" *ngIf="l.logDetails" style="opacity:0.7; margin-top:2px;">{{ l.logDetails }}</div>
           </div>
           <div class="stars" [attr.title]="'Rating ' + l.rating + '/10'">
             <app-icon name="star" [size]="14" *ngFor="let filled of starStates(l.rating)"
@@ -294,11 +301,8 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
 
   @Input() tour!: TourViewModel;
 
-  /** Emitted after a successful create or update so AppComponent can refresh the list. */
   @Output() tourSaved = new EventEmitter<Tour>();
-  /** Emitted after a successful delete so AppComponent can clear the selection. */
   @Output() tourDeleted = new EventEmitter<void>();
-  /** Emitted after a log create/delete so AppComponent refreshes popularity counts. */
   @Output() tourListChanged = new EventEmitter<void>();
 
   logs: TourLog[] = [];
@@ -323,7 +327,12 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
 
   constructor(private api: ApiService, private sanitizer: DomSanitizer) {}
 
+  private readonly onWindowResize = (): void => {
+    this.map?.invalidateSize();
+  };
+
   ngAfterViewInit(): void {
+    window.addEventListener('resize', this.onWindowResize);
     setTimeout(() => this.ensureMap(), 0);
     this.loadLogs();
     if (this.tour?.imagePath) this.loadTourImage(this.tour.id!);
@@ -350,11 +359,12 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
   }
 
   ngOnDestroy(): void {
+    window.removeEventListener('resize', this.onWindowResize);
     if (this.map) { this.map.remove(); this.map = null; }
     this.revokeImageUrl();
   }
 
-  // ── Tour ────────────────────────────────────────────────────────────────────
+  // --- Tour ---
 
   saveTour(): void {
     this.tour.submitted = true;
@@ -432,7 +442,7 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
     input.value = '';
   }
 
-  // ── Route / Map ─────────────────────────────────────────────────────────────
+  // --- Route / map ---
 
   calculateRoute(): void {
     const from = this.tour.origin?.trim();
@@ -440,19 +450,22 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
     if (!from || !to) { this.error = 'Please fill in From and To first.'; return; }
     this.busy = true;
     this.error = null;
+    // Geocode start/end, then fetch route from backend.
     this.api.getCoordinates(from).subscribe({
       next: ([fromLat, fromLng]) => {
         this.api.getCoordinates(to).subscribe({
           next: ([toLat, toLng]) => {
-            this.api.getRoute(fromLat, fromLng, toLat, toLng).subscribe({
+            this.api.getRoute(fromLat, fromLng, toLat, toLng, this.tour.transportType).subscribe({
               next: (routeJson) => {
                 this.busy = false;
                 this.ensureMap();
                 const coords = routeJson?.features?.[0]?.geometry?.coordinates as [number, number][] | undefined;
                 const summary = routeJson?.features?.[0]?.properties?.summary;
+                // ORS returns metres/seconds; we store km/minutes.
                 if (summary?.distance != null) this.tour.distance = Math.round((summary.distance / 1000) * 100) / 100;
                 if (summary?.duration != null) this.tour.estimatedTime = Math.round(summary.duration / 60);
                 if (Array.isArray(coords) && coords.length > 1) {
+                  // GeoJSON is [lng, lat]; Leaflet wants [lat, lng].
                   const latLngs = coords.map(([lng, lat]) => L.latLng(lat, lng));
                   this.drawRoute(latLngs, L.latLng(fromLat, fromLng), L.latLng(toLat, toLng));
                 } else {
@@ -472,6 +485,7 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
   private ensureMap(): void {
     if (!this.mapEl?.nativeElement) return;
     if (this.map) { this.map.invalidateSize(); return; }
+    // Default centre: Vienna.
     this.map = L.map(this.mapEl.nativeElement, { zoomControl: true }).setView([48.2082, 16.3738], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(this.map);
   }
@@ -491,7 +505,7 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
     if (this.markerTo) { this.markerTo.remove(); this.markerTo = null; }
   }
 
-  // ── Logs ────────────────────────────────────────────────────────────────────
+  // --- Logs ---
 
   loadLogs(): void {
     if (!this.tour?.id) { this.logs = []; return; }
@@ -539,12 +553,13 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
     });
   }
 
-  // ── Image ────────────────────────────────────────────────────────────────────
+  // --- Image ---
 
   loadTourImage(tourId: number): void {
     this.api.getTourImage(tourId).subscribe({
       next: (blob) => {
         this.revokeImageUrl();
+        // Blob from backend → temporary URL for img preview.
         this.tourImageObjectUrl = URL.createObjectURL(blob);
         this.tourImageSafeUrl = this.sanitizer.bypassSecurityTrustUrl(this.tourImageObjectUrl);
       },
@@ -558,7 +573,7 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
     this.tourImageSafeUrl = null;
   }
 
-  // ── City autocomplete ─────────────────────────────────────────────────────
+  // --- City autocomplete ---
 
   onOriginChange(): void { this.fetchSuggestions(this.tour.origin, 'origin'); }
   onDestChange(): void { this.fetchSuggestions(this.tour.destination, 'dest'); }
@@ -583,8 +598,6 @@ export class TourWorkspaceComponent implements AfterViewInit, OnChanges, OnDestr
 
   pickOrigin(city: string): void { this.tour.origin = city; this.showOriginSug = false; }
   pickDest(city: string): void { this.tour.destination = city; this.showDestSug = false; }
-
-  // ── View helpers ──────────────────────────────────────────────────────────
 
   transportIcon(type: string | null | undefined): IconName {
     switch ((type || '').toLowerCase()) {

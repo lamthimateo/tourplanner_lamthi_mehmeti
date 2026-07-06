@@ -14,27 +14,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Unit tests for the full-text search in {@link TourService#searchTourIds(String)}.
- *
- * <p>Verifies that:
- * <ul>
- *   <li>The search hits every tour field (name, description, origin,
- *       destination, transport type).</li>
- *   <li>It also hits fields of the associated logs (comments, details).</li>
- *   <li>Computed attributes (popularity, child-friendliness) are matchable
- *       via the special {@code popularity:<n>} / {@code child:<n>} tokens.</li>
- *   <li>Queries are case-insensitive and use substring matching.</li>
- *   <li>An empty query returns every owned tour.</li>
- * </ul>
- *
- * <p>Like the other service tests we populate {@link SecurityContextHolder}
- * with a fake authenticated user so that {@code AuthContext} resolves the
- * right ID; repositories are mocked.
- */
+/** Unit tests for TourService search (tour fields, logs, computed attributes). */
 public class TourServiceSearchTest {
 
     private static final Long TEST_USER_ID = 1L;
@@ -85,11 +69,11 @@ public class TourServiceSearchTest {
         TourLogRepository logRepo = mock(TourLogRepository.class);
 
         when(tourRepo.findByUserId(TEST_USER_ID)).thenReturn(List.of(tour(1L, "A"), tour(2L, "B")));
-        when(logRepo.findAll()).thenReturn(List.of());
 
         TourService service = new TourService();
         inject(service, tourRepo, logRepo);
 
+        // Empty query short-circuits before any log lookup happens.
         List<Long> ids = service.searchTourIds("");
         assertEquals(List.of(1L, 2L), ids);
     }
@@ -100,7 +84,7 @@ public class TourServiceSearchTest {
         TourLogRepository logRepo = mock(TourLogRepository.class);
 
         when(tourRepo.findByUserId(TEST_USER_ID)).thenReturn(List.of(tour(1L, "Vienna Trip"), tour(2L, "Salzburg")));
-        when(logRepo.findAll()).thenReturn(List.of());
+        when(logRepo.findByTourIdIn(anyCollection())).thenReturn(List.of());
 
         TourService service = new TourService();
         inject(service, tourRepo, logRepo);
@@ -119,7 +103,7 @@ public class TourServiceSearchTest {
         t2.setDescription("City walk");
 
         when(tourRepo.findByUserId(TEST_USER_ID)).thenReturn(List.of(t1, t2));
-        when(logRepo.findAll()).thenReturn(List.of());
+        when(logRepo.findByTourIdIn(anyCollection())).thenReturn(List.of());
 
         TourService service = new TourService();
         inject(service, tourRepo, logRepo);
@@ -138,7 +122,7 @@ public class TourServiceSearchTest {
         TourLog l = log(10L, t2);
         l.setComment("Great weather");
         when(tourRepo.findByUserId(TEST_USER_ID)).thenReturn(List.of(t1, t2));
-        when(logRepo.findAll()).thenReturn(List.of(l));
+        when(logRepo.findByTourIdIn(anyCollection())).thenReturn(List.of(l));
 
         TourService service = new TourService();
         inject(service, tourRepo, logRepo);
@@ -158,7 +142,7 @@ public class TourServiceSearchTest {
         l2.setRating(3);
 
         when(tourRepo.findByUserId(TEST_USER_ID)).thenReturn(List.of(t));
-        when(logRepo.findAll()).thenReturn(List.of(l1, l2));
+        when(logRepo.findByTourIdIn(anyCollection())).thenReturn(List.of(l1, l2));
 
         TourService service = new TourService();
         inject(service, tourRepo, logRepo);
@@ -173,7 +157,7 @@ public class TourServiceSearchTest {
         TourLogRepository logRepo = mock(TourLogRepository.class);
 
         when(tourRepo.findByUserId(TEST_USER_ID)).thenReturn(List.of(tour(1L, "T1")));
-        when(logRepo.findAll()).thenReturn(List.of());
+        when(logRepo.findByTourIdIn(anyCollection())).thenReturn(List.of());
 
         TourService service = new TourService();
         inject(service, tourRepo, logRepo);

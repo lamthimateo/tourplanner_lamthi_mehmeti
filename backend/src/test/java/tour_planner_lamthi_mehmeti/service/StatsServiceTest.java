@@ -17,13 +17,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link StatsService} — the "unique feature" of the app.
- *
- * These tests verify that aggregate metrics are computed correctly from a
- * realistic mix of tours, logs, and transport types, without needing a
- * database or a Spring context.
- */
+/** Unit tests for StatsService aggregation logic. */
 class StatsServiceTest {
 
     private static final Long USER_ID = 7L;

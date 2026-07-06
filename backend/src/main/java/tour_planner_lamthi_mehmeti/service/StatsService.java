@@ -16,27 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * <b>Unique feature</b> required by the project specification — produces a
- * per-user statistics snapshot for the dashboard card in the UI.
- *
- * <p>The computation consists of two passes:
- * <ol>
- *   <li><b>Global totals</b>: number of tours & logs, total distance, total
- *       time, average rating.</li>
- *   <li><b>Per-transport-type breakdown</b>: tours are grouped by transport
- *       type ("driving-car", "cycling-regular", ...) and each group gets
- *       its own small roll-up (count, avg distance, avg rating). The list
- *       is sorted by tour count descending so the busiest mode comes first
- *       in the UI bar chart.</li>
- * </ol>
- *
- * <p>All aggregation is done in memory using Java streams because the data
- * volume is tiny (one user, dozens of tours). For a large-scale deployment
- * the same logic would move into SQL {@code GROUP BY} queries.
- *
- * <p>Security: every read is scoped to
- * {@link AuthContext#getCurrentUserId()} so users only ever see their own
- * numbers.
+ * Builds dashboard stats for the current user (totals + breakdown by transport type).
  */
 @Service
 public class StatsService {
@@ -51,13 +31,6 @@ public class StatsService {
         this.tourLogRepository = tourLogRepository;
     }
 
-    /**
-     * Builds a complete {@link StatsDto} for the currently authenticated user.
-     *
-     * <p>Numbers that end up in the UI are pre-rounded here so the template
-     * doesn't have to worry about floating-point presentation — what it
-     * receives is what it displays.
-     */
     public StatsDto getStats() {
         Long userId = AuthContext.getCurrentUserId();
         logger.info("Computing stats for user {}", userId);

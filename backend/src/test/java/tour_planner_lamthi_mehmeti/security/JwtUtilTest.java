@@ -4,14 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link JwtUtil}.
- *
- * These tests use the real JWT library (no mocks) so that any breaking change in
- * signing, parsing, or claim layout is caught immediately. The secret is fixed
- * so that results are reproducible and the tests never touch the filesystem or
- * the network.
- */
+/** Unit tests for JWT create/parse/validate. */
 class JwtUtilTest {
 
     private static final String SECRET = "UnitTestSecretKey-MustBeLongEnoughForHmacSha256!!";

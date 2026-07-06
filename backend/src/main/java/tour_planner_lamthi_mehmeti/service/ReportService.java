@@ -11,6 +11,7 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tour_planner_lamthi_mehmeti.model.Tour;
 import tour_planner_lamthi_mehmeti.model.TourLog;
@@ -23,23 +24,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Generates PDF reports using <a href="https://itextpdf.com/">iText 7</a>.
- *
- * <p>Two flavours are produced:
- * <ul>
- *   <li><b>Single-tour report</b> ({@link #generateTourReport(Tour)}) —
- *       detailed metadata, embedded map image (if any) and a table of every
- *       log on the tour.</li>
- *   <li><b>Summary report</b> ({@link #generateSummaryReport(List)}) — one
- *       row per tour with the per-tour log count; handy for an overview
- *       print-out.</li>
- * </ul>
- *
- * <p>Both reports are written to {@code ~/TourPlanner/reports/} and the path
- * is returned so the caller (usually {@code TourController}) can stream the
- * file to the browser. iText writes synchronously and closes the document
- * with the {@code try-with-resources} block — no partial/corrupt PDFs are
- * left behind if an exception fires mid-generation.
+ * Generates PDF reports with iText (single tour or summary of all tours).
  */
 @Service
 public class ReportService {
@@ -48,25 +33,19 @@ public class ReportService {
 
     private final TourLogRepository tourLogRepository;
 
+    @Value("${app.base-dir:${user.home}/TourPlanner}")
+    private String baseDir;
+
     public ReportService(TourLogRepository tourLogRepository) {
         this.tourLogRepository = tourLogRepository;
     }
 
-    /** Defensive helper: turns {@code null} into an empty string for safe PDF rendering. */
     private static String nullSafe(String s) {
         return s == null ? "" : s;
     }
 
-    /**
-     * Generates a single-tour PDF report.
-     *
-     * <p>Layout: a banner title, a paragraph per metadata field, the tour
-     * image (if one is on disk), then a six-column table of all its logs.
-     *
-     * @return absolute {@link Path} to the freshly-written PDF on disk
-     */
     public Path generateTourReport(Tour tour) throws IOException {
-        Path reportsDir = Path.of(System.getProperty("user.home"), "TourPlanner", "reports");
+        Path reportsDir = Path.of(baseDir, "reports");
         Files.createDirectories(reportsDir);
         Path file = reportsDir.resolve("TourReport_" + tour.getId() + ".pdf");
 
@@ -112,19 +91,8 @@ public class ReportService {
         return file;
     }
 
-    /**
-     * Generates a multi-tour summary PDF.
-     *
-     * <p>One row per tour, with tour metadata in columns plus a trailing
-     * column containing the log count. Useful for a "print all tours"
-     * overview that doesn't drown the reader in per-log detail.
-     *
-     * @param tours the tours to include; typically the full list for the
-     *              current user
-     * @return absolute {@link Path} to the freshly-written PDF
-     */
     public Path generateSummaryReport(List<Tour> tours) throws IOException {
-        Path reportsDir = Path.of(System.getProperty("user.home"), "TourPlanner", "reports");
+        Path reportsDir = Path.of(baseDir, "reports");
         Files.createDirectories(reportsDir);
         Path file = reportsDir.resolve("SummaryReport.pdf");
 
@@ -162,12 +130,7 @@ public class ReportService {
         return file;
     }
 
-    /**
-     * Embeds the tour image into the PDF if one is configured and still
-     * exists on disk. Silently skips on any failure — the PDF report is
-     * still valuable without the picture, so we never let an image problem
-     * abort the whole export.
-     */
+    /** Skip image on any error — the PDF is still useful without it. */
     private void addTourImageIfPresent(Document document, String imagePath) {
         try {
             if (imagePath == null || imagePath.isBlank()) return;

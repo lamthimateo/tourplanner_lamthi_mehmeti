@@ -20,20 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link TourLogService}.
- *
- * <p>The bulk of the suite focuses on the <b>ownership / tenancy
- * checks</b> that this service enforces: every CRUD path must fail when
- * the parent tour belongs to a different user, and must fail when a log
- * ID is passed that belongs to another tour. Those two invariants were
- * the critical security hardening added late in the project.
- *
- * <p>{@link #setUp()} populates a Spring {@link SecurityContextHolder}
- * with a fake {@code UsernamePasswordAuthenticationToken} so that
- * {@code AuthContext.getCurrentUserId()} resolves to {@link #USER_ID};
- * {@link #tearDown()} clears it again so tests don't leak context.
- */
+/** Unit tests for TourLogService, mainly ownership checks on CRUD. */
 public class TourLogServiceTest {
 
     private static final Long USER_ID = 1L;

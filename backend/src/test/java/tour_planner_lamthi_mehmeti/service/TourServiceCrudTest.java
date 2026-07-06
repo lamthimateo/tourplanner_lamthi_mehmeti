@@ -16,18 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for the standard CRUD paths in {@link TourService}.
- *
- * <p>Each test sets up a minimal {@link SecurityContextHolder} so that
- * {@code AuthContext.getCurrentUserId()} returns the fixed {@link #USER_ID}
- * constant. This mirrors the behaviour of {@code JwtAuthFilter} in
- * production without the HTTP ceremony.
- *
- * <p>The repositories are Mockito mocks — we only want to verify the
- * service's own logic (user-scoping, not-found handling, computed
- * attributes), not Spring Data's generated queries.
- */
+/** Unit tests for TourService CRUD. Repositories are mocked; SecurityContext fakes a logged-in user. */
 public class TourServiceCrudTest {
 
     private static final Long USER_ID = 42L;
@@ -135,7 +124,11 @@ public class TourServiceCrudTest {
     void deleteTourDeletesWhenOwned() {
         when(tourRepo.existsByIdAndUserId(3L, USER_ID)).thenReturn(true);
         service.deleteTour(3L);
-        verify(tourRepo).deleteById(3L);
+        // Logs must be removed before the tour itself, otherwise the
+        // tour_id foreign key on tour_logs would be violated.
+        var order = inOrder(logRepo, tourRepo);
+        order.verify(logRepo).deleteByTourId(3L);
+        order.verify(tourRepo).deleteById(3L);
     }
 
     @Test

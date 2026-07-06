@@ -18,49 +18,19 @@ import org.springframework.http.HttpStatus;
 import java.util.List;
 
 /**
- * Central Spring-Security configuration for the backend.
- *
- * <p>Declares three beans:
- * <ol>
- *   <li>{@link #filterChain(HttpSecurity)} — the HTTP security filter chain:
- *       stateless (no server-side sessions), CSRF disabled (we are a pure
- *       JSON API, not an HTML form site), CORS enabled for the Angular dev
- *       server, and the {@link JwtAuthFilter} wired in so every request
- *       carries an identity.</li>
- *   <li>{@link #corsConfigurationSource()} — allows the Angular app served
- *       from {@code localhost:4200} to call this API from a browser.</li>
- *   <li>{@link #passwordEncoder()} — BCrypt encoder used by {@code AuthService}
- *       to hash passwords before persisting them and to verify on login.</li>
- * </ol>
- *
- * <p>Authorization rules are intentionally simple: {@code /api/auth/**} is
- * open (so clients can log in or register), every other {@code /api/**} path
- * requires a valid JWT, and everything else (actuator, error page, static
- * files) is unrestricted. Unauthorized requests receive a flat
- * {@code 401 Unauthorized} instead of a redirect to a non-existent login page
- * — the correct behaviour for a JSON API.
+ * Spring Security setup: stateless JWT auth, CORS for Angular dev server, BCrypt passwords.
+ * /api/auth/** is public; everything else under /api needs a token.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    /** Filter that extracts and verifies the JWT on each request. */
     private final JwtAuthFilter jwtAuthFilter;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
-    /**
-     * Defines the full HTTP security filter chain.
-     *
-     * <p>The order of configuration mirrors the order in which requests are
-     * processed: CORS → CSRF (off) → session policy → error mapping →
-     * URL-pattern authorization → JWT filter installed <em>before</em> the
-     * default {@code UsernamePasswordAuthenticationFilter} so that requests
-     * bearing a Bearer token are already authenticated when the built-in
-     * filters run.
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -81,11 +51,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Explicit CORS configuration so the Angular dev server (port 4200) can
-     * call this API from the browser. Without this the browser's
-     * same-origin policy would block all XHRs to port 8081.
-     */
+    /** Allow Angular on localhost:4200 to call this API from the browser. */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -100,11 +66,6 @@ public class SecurityConfig {
         return source;
     }
 
-    /**
-     * Password encoder bean. BCrypt is intentionally slow (adaptive work
-     * factor) which makes brute-force attacks against the stored hashes
-     * expensive even if an attacker dumps the database.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

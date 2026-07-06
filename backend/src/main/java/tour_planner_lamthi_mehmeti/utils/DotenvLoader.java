@@ -1,7 +1,7 @@
 package tour_planner_lamthi_mehmeti.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,21 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Minimal .env loader.
- * <p>
- * Why:
- * - When you run from IntelliJ, run.sh is bypassed.
- * - Spring Boot can read configuration from environment variables *and* JVM system properties.
- * <p>
- * This helper reads KEY=VALUE lines from a .env file in the current working directory
- * and sets them as JVM system properties (only if not already set).
+ * Loads KEY=VALUE lines from .env into JVM system properties.
+ * Needed when running from IntelliJ (run.sh is not used).
  */
 public final class DotenvLoader {
 
-    private static final Logger log = LoggerFactory.getLogger(DotenvLoader.class);
+    private static final Logger log = LogManager.getLogger(DotenvLoader.class);
 
     private DotenvLoader() {
-        // util
     }
 
     public static void loadFromWorkingDirectoryIfPresent() {
@@ -73,8 +66,7 @@ public final class DotenvLoader {
                     continue;
                 }
 
-                // NOTE: Java cannot set real OS environment variables at runtime.
-                // But Spring Boot treats JVM system properties as a valid config source.
+                // Java can't set OS env vars at runtime; system properties work with Spring Boot.
                 System.setProperty(key, value);
             }
         }
