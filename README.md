@@ -37,6 +37,11 @@ tourplanner_lamthi_mehmeti/
 | Node | 22 | `run_frontend.sh` loads it via `nvm use 22` |
 | Docker | any recent | For `docker compose up -d` |
 
+**Platform notes:** `run_frontend.sh` assumes Homebrew's nvm install path.
+Linux users, or macOS users with a curl-installed nvm, should run `nvm use 22`
+manually before `./run_frontend.sh`. Windows users should use WSL, or run the
+commands inside `run_backend.sh`/`run_frontend.sh` directly.
+
 ---
 
 ## Quick start
@@ -62,6 +67,15 @@ docker compose up -d      # PostgreSQL only
 ./run_backend.sh          # backend only (http://localhost:8081)
 ./run_frontend.sh         # frontend only (http://localhost:4200)
 ```
+
+---
+
+## First login
+
+There's no seeded account. On the login screen, switch to the register form
+to create one (calls `POST /api/auth/register`) — username 3-50 chars,
+password 4-100 chars, no email verification. Then log in with those
+credentials.
 
 ---
 
